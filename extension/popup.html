@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LC Helper</title>
+  <style>
+    body {
+      width: 300px;
+      padding: 20px;
+      font-family: 'Inter', sans-serif;
+      background: #0e1116;
+      color: #e5e7eb;
+    }
+    h2 {
+      margin: 0 0 16px 0;
+      font-size: 18px;
+      font-weight: 500;
+    }
+    p {
+      margin: 0 0 12px 0;
+      font-size: 14px;
+      color: #9ca3af;
+      line-height: 1.5;
+    }
+    .status {
+      padding: 12px;
+      background: rgba(96, 165, 250, 0.1);
+      border: 1px solid rgba(96, 165, 250, 0.2);
+      border-radius: 8px;
+      margin-bottom: 16px;
+    }
+    .status-indicator {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #10b981;
+      margin-right: 8px;
+    }
+    button {
+      width: 100%;
+      padding: 12px;
+      background: #60a5fa;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #93c5fd;
+    }
+  </style>
+</head>
+<body>
+  <h2>LC Helper</h2>
+  
+  <div class="status">
+    <span class="status-indicator"></span>
+    <span>Extension Active</span>
+  </div>
+  
+  <p>
+    Solve problems on LeetCode and they'll automatically sync to your revision system.
+  </p>
+  
+  <button onclick="openDashboard()">
+    Open Dashboard
+  </button>
+  
+  <script>
+    function openDashboard() {
+      chrome.tabs.create({ url: 'http://localhost:3000' });
+    }
+  </script>
+</body>
+</html>

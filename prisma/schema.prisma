@@ -1,0 +1,90 @@
+// This is your Prisma schema file
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Problem {
+  id            String    @id @default(cuid())
+  slug          String    @unique
+  title         String
+  difficulty    String    // Easy, Medium, Hard
+  problemNumber Int?      // LeetCode problem number (e.g., 1, 2, 3)
+  description   String?   // Problem statement
+  constraints   String?   // Constraints section
+  examples      String?   // Example test cases
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  // One-to-one relationships
+  solution      Solution?
+  explanation   AIExplanation?
+  revision      Revision?
+  
+  // One-to-many relationships
+  notes       Note[]
+  
+  @@index([slug])
+  @@index([difficulty])
+}
+
+model Solution {
+  id          String    @id @default(cuid())
+  problemId   String    @unique
+  language    String
+  code        String    // Code content
+  submittedAt DateTime
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  
+  problem     Problem   @relation(fields: [problemId], references: [id], onDelete: Cascade)
+}
+
+model AIExplanation {
+  id                String    @id @default(cuid())
+  problemId         String    @unique
+  approachTag       String    // e.g., "Binary Search", "Two Pointers"
+  coreIdea          String    // One sentence summary
+  explanationSteps  String    // JSON array of steps
+  complexity        String    // JSON object {time: "O(n)", space: "O(1)"}
+  keyInsight        String    // The invariant or key observation
+  commonPitfall     String    // Specific mistake to avoid
+  difficultyRating  String    // Easy | Medium | Hard
+  roast             String?   // Optional playful critique
+  generatedAt       DateTime  @default(now())
+  
+  problem     Problem   @relation(fields: [problemId], references: [id], onDelete: Cascade)
+}
+
+model Revision {
+  id              String    @id @default(cuid())
+  problemId       String    @unique
+  lastReviewed    DateTime?
+  nextReview      DateTime
+  revisionCount   Int       @default(0)  // For spaced repetition intervals
+  totalReviews    Int       @default(0)  // Total number of review attempts
+  confidenceScore Int?      // 1-5 scale
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  problem     Problem   @relation(fields: [problemId], references: [id], onDelete: Cascade)
+  
+  @@index([nextReview])
+}
+
+model Note {
+  id          String    @id @default(cuid())
+  problemId   String
+  type        String    // "RECALL" or "DEEP" - SQLite doesn't support enums
+  content     String    // Markdown content
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  
+  problem     Problem   @relation(fields: [problemId], references: [id], onDelete: Cascade)
+  
+  @@index([problemId, type])
+}

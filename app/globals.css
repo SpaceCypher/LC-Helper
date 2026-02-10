@@ -1,0 +1,129 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Import Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+@layer base {
+  * {
+    @apply border-glass-border;
+  }
+  
+  body {
+    @apply bg-background text-text-primary;
+    @apply font-sans antialiased;
+  }
+  
+  h1 {
+    @apply text-4xl font-light tracking-tight;
+  }
+  
+  h2 {
+    @apply text-2xl font-normal;
+  }
+  
+  h3 {
+    @apply text-xl font-medium;
+  }
+}
+
+@layer components {
+  /* Glass Card Base */
+  .glass-card {
+    @apply relative;
+    @apply bg-glass-surface backdrop-blur-glass;
+    @apply border border-glass-border;
+    @apply rounded-glass;
+    @apply shadow-glass;
+    @apply transition-all duration-300;
+  }
+  
+  /* Glass Card Hover Effect */
+  .glass-card-hover {
+    @apply glass-card;
+    @apply hover:shadow-glass-hover hover:-translate-y-1;
+    @apply cursor-pointer;
+  }
+  
+  /* Primary Button */
+  .btn-primary {
+    @apply px-6 py-3 rounded-full;
+    @apply bg-accent text-white;
+    @apply font-medium;
+    @apply transition-all duration-200;
+    @apply hover:bg-accent-hover hover:shadow-glass-hover;
+    @apply active:scale-95;
+  }
+  
+  /* Secondary Button */
+  .btn-secondary {
+    @apply px-6 py-3 rounded-full;
+    @apply bg-transparent border border-glass-border;
+    @apply text-text-secondary;
+    @apply font-medium;
+    @apply transition-all duration-200;
+    @apply hover:border-accent hover:text-accent;
+    @apply active:scale-95;
+  }
+  
+  /* Text Muted */
+  .text-muted {
+    @apply text-text-muted;
+  }
+  
+  /* Accent Glow */
+  .accent-glow {
+    @apply shadow-[0_0_20px_rgba(96,165,250,0.3)];
+  }
+  
+  /* Code Block Styling */
+  .code-block {
+    @apply glass-card p-4;
+    @apply font-mono text-sm;
+    @apply overflow-x-auto;
+  }
+  
+  /* Input Styling */
+  .input-glass {
+    @apply glass-card px-4 py-2;
+    @apply bg-transparent;
+    @apply focus:outline-none focus:ring-2 focus:ring-accent;
+    @apply placeholder:text-text-muted;
+  }
+}
+
+@layer utilities {
+  /* Vertical Flow Layout */
+  .vertical-flow {
+    @apply flex flex-col space-y-6;
+  }
+  
+  /* Breathing Space */
+  .breathing-space {
+    @apply p-8 space-y-8;
+  }
+  
+  /* Smooth Transition */
+  .smooth-transition {
+    @apply transition-all duration-300 ease-in-out;
+  }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
