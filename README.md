@@ -108,7 +108,7 @@ Once deployed, you need to push the schema to your Supabase database. You can do
 ---
 
 ## Demo
-
+![6](demo/6.png)
 ![1](demo/1.png)
 ![2](demo/2.png)
 ![3](demo/3.png)
