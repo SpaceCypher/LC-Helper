@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { isDueForRevision } from '@/lib/revision';
 
+export const dynamic = 'force-dynamic';
+
 /**
  * GET /api/problems
  * Query problems with various filters

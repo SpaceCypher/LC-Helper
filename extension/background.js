@@ -30,10 +30,26 @@ async function handleSubmissionSync(data, retryCount = 0) {
     try {
         console.log('LC Helper: Sending submission to backend:', data);
 
-        const response = await fetch(`${BACKEND_URL}/api/sync`, {
+        // Get API Key and Backend URL
+        const storage = await chrome.storage.local.get(['lcHelperApiKey', 'lcHelperBackendUrl']);
+        const apiKey = storage.lcHelperApiKey;
+        const backendUrl = storage.lcHelperBackendUrl || BACKEND_URL;
+
+        if (!apiKey) {
+            chrome.notifications?.create?.({
+                type: 'basic',
+                title: 'LC Helper - Setup Required',
+                message: 'Please set your App Password in the extension popup.',
+                priority: 2
+            });
+            throw new Error('API Key not set');
+        }
+
+        const response = await fetch(`${backendUrl}/api/sync`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
+                'x-lc-helper-auth': apiKey
             },
             body: JSON.stringify(data),
         });

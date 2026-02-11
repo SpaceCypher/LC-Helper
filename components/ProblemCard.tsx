@@ -33,23 +33,24 @@ export default function ProblemCard({
             month: 'short',
             day: 'numeric',
             year: 'numeric',
+            timeZone: 'UTC', // Ensure consistency with server-side UTC logic
         });
     };
 
     return (
         <div
-            className="glass-card-hover p-6 animate-slide-up"
+            className="glass-card-hover p-5 md:p-6 animate-slide-up"
             onClick={onClick}
         >
-            <div className="flex items-start justify-between mb-3">
-                <h3 className="text-xl font-medium pr-4">{title}</h3>
-                <span className={`text-sm font-medium ${difficultyColor}`}>
+            <div className="flex flex-col sm:flex-row sm:items-start justify-between mb-3 gap-2">
+                <h3 className="text-lg md:text-xl font-medium pr-4 break-words">{title}</h3>
+                <span className={`text-sm font-medium ${difficultyColor} self-start sm:self-auto`}>
                     {difficulty}
                 </span>
             </div>
 
-            <div className="flex items-center justify-between text-text-secondary text-sm">
-                <div className="flex items-center gap-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between text-text-secondary text-sm gap-2">
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
                     <span>Next review: {formatDate(nextReview)}</span>
                     {totalReviews > 0 && (
                         <span className="text-accent">

@@ -147,15 +147,15 @@ export default function RevisionPage({ params }: { params: { slug: string } }) {
     return (
         <div className="breathing-space">
             {/* Problem Header - Always Visible */}
-            <div className="glass-card p-8 mb-8 animate-fade-in">
-                <div className="flex items-start justify-between mb-6">
+            <div className="glass-card p-5 md:p-8 mb-6 md:mb-8 animate-fade-in">
+                <div className="flex flex-col sm:flex-row sm:items-start justify-between mb-6 gap-2">
                     <div>
                         {problem.problemNumber && (
-                            <span className="text-sm text-text-muted mb-2 block">
+                            <span className="text-sm text-text-muted mb-1 md:mb-2 block">
                                 Problem #{problem.problemNumber}
                             </span>
                         )}
-                        <h1>{problem.title}</h1>
+                        <h1 className="text-2xl md:text-3xl break-words">{problem.title}</h1>
                     </div>
                     <span
                         className={`text-sm font-medium ${problem.difficulty === 'Easy'
@@ -163,7 +163,7 @@ export default function RevisionPage({ params }: { params: { slug: string } }) {
                             : problem.difficulty === 'Medium'
                                 ? 'text-yellow-400'
                                 : 'text-red-400'
-                            }`}
+                            } self-start sm:self-auto`}
                     >
                         {problem.difficulty}
                     </span>
@@ -173,7 +173,7 @@ export default function RevisionPage({ params }: { params: { slug: string } }) {
                 {problem.description && (
                     <div className="mb-4">
                         <h3 className="text-sm text-text-muted mb-2">Description</h3>
-                        <p className="text-text-secondary leading-relaxed">
+                        <p className="text-text-secondary leading-relaxed text-sm md:text-base">
                             {problem.description}
                         </p>
                     </div>
@@ -183,7 +183,7 @@ export default function RevisionPage({ params }: { params: { slug: string } }) {
                 {problem.examples && (
                     <div className="mb-4">
                         <h3 className="text-sm text-text-muted mb-2">Examples</h3>
-                        <pre className="text-text-secondary bg-black/20 p-4 rounded-lg overflow-x-auto text-sm">
+                        <pre className="text-text-secondary bg-black/20 p-4 rounded-lg overflow-x-auto text-xs md:text-sm whitespace-pre-wrap break-all">
                             {problem.examples}
                         </pre>
                     </div>
@@ -193,7 +193,7 @@ export default function RevisionPage({ params }: { params: { slug: string } }) {
                 {problem.constraints && (
                     <div>
                         <h3 className="text-sm text-text-muted mb-2">Constraints</h3>
-                        <pre className="text-text-secondary text-sm whitespace-pre-wrap">
+                        <pre className="text-text-secondary text-xs md:text-sm whitespace-pre-wrap break-words">
                             {problem.constraints}
                         </pre>
                     </div>
@@ -216,11 +216,11 @@ export default function RevisionPage({ params }: { params: { slug: string } }) {
 
             {/* Reveal Button - Hidden after reveal */}
             {!revealed ? (
-                <div className="glass-card p-12 text-center animate-slide-up">
-                    <p className="text-xl text-text-secondary mb-6">
+                <div className="glass-card p-8 md:p-12 text-center animate-slide-up">
+                    <p className="text-lg md:text-xl text-text-secondary mb-6">
                         Try to recall the solution, approach, and key insights
                     </p>
-                    <button onClick={handleReveal} className="btn-primary text-lg px-8 py-4">
+                    <button onClick={handleReveal} className="btn-primary text-base md:text-lg px-6 py-3 md:px-8 md:py-4 w-full md:w-auto">
                         I Tried → Show Solution
                     </button>
                 </div>

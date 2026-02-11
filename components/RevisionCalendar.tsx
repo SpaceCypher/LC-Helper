@@ -24,9 +24,9 @@ export default function RevisionCalendar({ revisions }: RevisionCalendarProps) {
     const [currentMonth, setCurrentMonth] = useState(new Date());
     const [selectedDate, setSelectedDate] = useState<Date | null>(null);
 
-    // Get revisions grouped by date
+    // Get revisions grouped by date (UTC YYYY-MM-DD)
     const revisionsByDate = revisions.reduce((acc, revision) => {
-        const dateKey = new Date(revision.nextReview).toDateString();
+        const dateKey = new Date(revision.nextReview).toISOString().split('T')[0];
         if (!acc[dateKey]) {
             acc[dateKey] = [];
         }
@@ -60,19 +60,25 @@ export default function RevisionCalendar({ revisions }: RevisionCalendarProps) {
         return days;
     };
 
+    // Helper to get YYYY-MM-DD key from local date object
+    const getDateKey = (date: Date): string => {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    };
+
     // Determine date status
     const getDateStatus = (date: Date): 'empty' | 'scheduled' | 'due' | 'completed' | 'overdue' => {
-        const dateKey = date.toDateString();
+        const dateKey = getDateKey(date);
         const dateRevisions = revisionsByDate[dateKey];
 
         if (!dateRevisions || dateRevisions.length === 0) {
             return 'empty';
         }
 
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        const checkDate = new Date(date);
-        checkDate.setHours(0, 0, 0, 0);
+        // Use UTC comparison for status
+        const todayKey = new Date().toISOString().split('T')[0];
 
         // Check if all problems for this date have been reviewed
         const allCompleted = dateRevisions.every(rev =>
@@ -83,11 +89,11 @@ export default function RevisionCalendar({ revisions }: RevisionCalendarProps) {
             return 'completed';
         }
 
-        if (checkDate < today) {
+        if (dateKey < todayKey) {
             return 'overdue';
         }
 
-        if (checkDate.getTime() === today.getTime()) {
+        if (dateKey === todayKey) {
             return 'due';
         }
 
@@ -171,11 +177,11 @@ export default function RevisionCalendar({ revisions }: RevisionCalendarProps) {
                         return <div key={`empty-${index}`} className="aspect-square" />;
                     }
 
-                    const dateKey = date.toDateString();
+                    const dateKey = getDateKey(date);
                     const dateRevisions = revisionsByDate[dateKey];
                     const status = getDateStatus(date);
                     const problemCount = dateRevisions?.length || 0;
-                    const isSelected = selectedDate?.toDateString() === dateKey;
+                    const isSelected = selectedDate ? getDateKey(selectedDate) === dateKey : false;
 
                     return (
                         <button
@@ -203,7 +209,7 @@ export default function RevisionCalendar({ revisions }: RevisionCalendarProps) {
             </div>
 
             {/* Selected Date Details */}
-            {selectedDate && revisionsByDate[selectedDate.toDateString()] && (
+            {selectedDate && revisionsByDate[getDateKey(selectedDate)] && (
                 <div className="mt-6 pt-6 border-t border-glass-border">
                     <h3 className="text-lg font-medium mb-4">
                         {selectedDate.toLocaleDateString('en-US', {
@@ -213,7 +219,7 @@ export default function RevisionCalendar({ revisions }: RevisionCalendarProps) {
                         })}
                     </h3>
                     <div className="space-y-2">
-                        {revisionsByDate[selectedDate.toDateString()].map(revision => (
+                        {revisionsByDate[getDateKey(selectedDate)].map(revision => (
                             <button
                                 key={revision.problem.slug}
                                 onClick={() => router.push(`/problems/${revision.problem.slug}`)}
@@ -222,8 +228,8 @@ export default function RevisionCalendar({ revisions }: RevisionCalendarProps) {
                                 <div className="flex items-center justify-between">
                                     <span className="font-medium">{revision.problem.title}</span>
                                     <span className={`text-sm ${revision.problem.difficulty === 'Easy' ? 'text-green-400' :
-                                            revision.problem.difficulty === 'Medium' ? 'text-yellow-400' :
-                                                'text-red-400'
+                                        revision.problem.difficulty === 'Medium' ? 'text-yellow-400' :
+                                            'text-red-400'
                                         }`}>
                                         {revision.problem.difficulty}
                                     </span>

@@ -14,7 +14,7 @@ export default function CodeViewer({ code, language }: CodeViewerProps) {
 
     return (
         <div className="glass-card p-6 animate-fade-in">
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex flex-wrap items-center justify-between mb-4 gap-2">
                 <h3 className="text-lg font-medium">Your Solution</h3>
                 <button
                     onClick={handleCopy}

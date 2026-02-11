@@ -240,58 +240,18 @@ function getCode() {
 
 /**
  * Periodically cache code from editor
+ * (Simplified significantly to avoid CSP issues)
  */
 function cacheCode() {
+    // Only try to read from textarea which is safe
     try {
-        // Monaco editor is in page context, not accessible from content script
-        // We need to inject a script to grab it
-        const monacoEditor = document.querySelector('.monaco-editor');
-        if (monacoEditor) {
-            // Inject script to get code from Monaco in page context
-            const script = document.createElement('script');
-            script.textContent = `
-                (function() {
-                    try {
-                        if (window.monaco && window.monaco.editor) {
-                            const models = window.monaco.editor.getModels();
-                            if (models && models.length > 0) {
-                                const code = models[0].getValue();
-                                // Store in a data attribute that content script can read
-                                document.body.setAttribute('data-lc-helper-code', code);
-                            }
-                        }
-                    } catch (e) {
-                        console.error('LC Helper: Page script error:', e);
-                    }
-                })();
-            `;
-            document.head.appendChild(script);
-            script.remove();
-
-            // Now read the code from the data attribute
-            const code = document.body.getAttribute('data-lc-helper-code');
-            if (code && code.length > 10) {
-                cachedCode = code;
-                console.log('LC Helper: Code cached from Monaco! Length:', code.length);
-                // Clean up
-                document.body.removeAttribute('data-lc-helper-code');
-                return;
-            }
-        }
-
-        // Try textarea as fallback
         const textarea = document.querySelector('textarea[class*="code"]');
         if (textarea && textarea.value && textarea.value.length > 10) {
             cachedCode = textarea.value;
             console.log('LC Helper: Code cached from textarea! Length:', textarea.value.length);
-            return;
-        }
-
-        if (!cachedCode) {
-            console.log('LC Helper: No code found to cache');
         }
     } catch (error) {
-        console.error('LC Helper: Error caching code:', error);
+        // Silent fail
     }
 }
 
@@ -406,12 +366,18 @@ async function syncSubmission(data) {
             } else {
                 console.error('LC Helper: Sync failed:', response?.error);
                 showNotification('❌ Sync failed: ' + (response?.error || 'Unknown error'));
+
+                // Reset lastSubmissionId so we can retry
+                lastSubmissionId = null;
             }
             isProcessing = false;
         });
     } catch (error) {
         console.error('LC Helper: Error syncing submission:', error);
         showNotification('❌ Error: ' + error.message);
+
+        // Reset lastSubmissionId so we can retry
+        lastSubmissionId = null;
         isProcessing = false;
     }
 }

@@ -21,36 +21,37 @@ interface UpcomingTasksListProps {
 export default function UpcomingTasksList({ revisions, limit = 30 }: UpcomingTasksListProps) {
     const router = useRouter();
 
-    // Group revisions by date
+    // Group revisions by UTC Date string (YYYY-MM-DD)
     const revisionsByDate = revisions.reduce((acc, revision) => {
-        const date = new Date(revision.nextReview);
-        date.setHours(0, 0, 0, 0);
-        const dateKey = date.toISOString();
+        // Use standard UTC date string for grouping
+        const dateKey = new Date(revision.nextReview).toISOString().split('T')[0];
 
         if (!acc[dateKey]) {
             acc[dateKey] = {
-                date,
+                dateKey,
                 problems: [],
             };
         }
         acc[dateKey].problems.push(revision.problem);
         return acc;
-    }, {} as Record<string, { date: Date; problems: Problem[] }>);
+    }, {} as Record<string, { dateKey: string; problems: Problem[] }>);
 
-    // Sort by date (ascending) and limit
+    // Sort by date key (ascending) and limit
     const sortedDates = Object.values(revisionsByDate)
-        .sort((a, b) => a.date.getTime() - b.date.getTime())
+        .sort((a, b) => a.dateKey.localeCompare(b.dateKey))
         .slice(0, limit);
 
-    // Get relative time string
-    const getRelativeTime = (date: Date): string => {
+    // Get relative time string comparing UTC dates
+    const getRelativeTime = (dateKey: string): string => {
         const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        const targetDate = new Date(date);
-        targetDate.setHours(0, 0, 0, 0);
+        const todayKey = today.toISOString().split('T')[0];
 
-        const diffTime = targetDate.getTime() - today.getTime();
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        // Compare date strings directly or timestamp of YYYY-MM-DD
+        const target = new Date(dateKey); // Parsed as UTC midnight
+        const now = new Date(todayKey);   // Parsed as UTC midnight
+
+        const diffTime = target.getTime() - now.getTime();
+        const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
 
         if (diffDays === 0) return 'Today';
         if (diffDays === 1) return 'Tomorrow';
@@ -65,12 +66,9 @@ export default function UpcomingTasksList({ revisions, limit = 30 }: UpcomingTas
         return `in ${months} ${months === 1 ? 'month' : 'months'}`;
     };
 
-    const isPast = (date: Date): boolean => {
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        const targetDate = new Date(date);
-        targetDate.setHours(0, 0, 0, 0);
-        return targetDate < today;
+    const isPast = (dateKey: string): boolean => {
+        const today = new Date().toISOString().split('T')[0];
+        return dateKey < today;
     };
 
     if (sortedDates.length === 0) {
@@ -89,10 +87,12 @@ export default function UpcomingTasksList({ revisions, limit = 30 }: UpcomingTas
             <h2 className="text-2xl font-light mb-6">📋 Upcoming Reviews</h2>
 
             <div className="space-y-6 max-h-[600px] overflow-y-auto pr-2">
-                {sortedDates.map(({ date, problems }) => {
-                    const dateKey = date.toISOString();
-                    const relativeTime = getRelativeTime(date);
-                    const isOverdue = isPast(date);
+                {sortedDates.map(({ dateKey, problems }) => {
+                    const relativeTime = getRelativeTime(dateKey);
+                    const isOverdue = isPast(dateKey);
+
+                    // Create date object for display, forcing UTC interpreting
+                    const displayDate = new Date(dateKey);
 
                     return (
                         <div key={dateKey} className="animate-slide-up">
@@ -101,9 +101,10 @@ export default function UpcomingTasksList({ revisions, limit = 30 }: UpcomingTas
                                 <div>
                                     <h3 className={`font-medium ${isOverdue ? 'text-red-400' : 'text-accent'
                                         }`}>
-                                        {date.toLocaleDateString('en-US', {
+                                        {displayDate.toLocaleDateString('en-US', {
                                             month: 'short',
-                                            day: 'numeric'
+                                            day: 'numeric',
+                                            timeZone: 'UTC' // Important: Force UTC display
                                         })}
                                     </h3>
                                     <p className="text-xs text-text-muted">{relativeTime}</p>
@@ -128,8 +129,8 @@ export default function UpcomingTasksList({ revisions, limit = 30 }: UpcomingTas
                                                 </p>
                                             </div>
                                             <span className={`text-xs ml-2 ${problem.difficulty === 'Easy' ? 'text-green-400' :
-                                                    problem.difficulty === 'Medium' ? 'text-yellow-400' :
-                                                        'text-red-400'
+                                                problem.difficulty === 'Medium' ? 'text-yellow-400' :
+                                                    'text-red-400'
                                                 }`}>
                                                 {problem.difficulty}
                                             </span>

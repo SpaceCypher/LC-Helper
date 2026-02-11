@@ -92,7 +92,7 @@ export default function NotesEditor({ slug, notes, onNotesChange }: NotesEditorP
                     {recallNotes.map((note) => (
                         <div key={note.id} className="flex items-start gap-2">
                             {editingId === note.id ? (
-                                <div className="flex-1 flex gap-2">
+                                <div className="flex-1 flex flex-col sm:flex-row gap-2">
                                     <input
                                         type="text"
                                         value={editContent}
@@ -100,18 +100,20 @@ export default function NotesEditor({ slug, notes, onNotesChange }: NotesEditorP
                                         className="input-glass flex-1"
                                         autoFocus
                                     />
-                                    <button
-                                        onClick={() => handleUpdateNote(note.id)}
-                                        className="btn-primary text-sm px-3 py-1"
-                                    >
-                                        Save
-                                    </button>
-                                    <button
-                                        onClick={() => setEditingId(null)}
-                                        className="btn-secondary text-sm px-3 py-1"
-                                    >
-                                        Cancel
-                                    </button>
+                                    <div className="flex gap-2 self-end sm:self-auto">
+                                        <button
+                                            onClick={() => handleUpdateNote(note.id)}
+                                            className="btn-primary text-sm px-3 py-1"
+                                        >
+                                            Save
+                                        </button>
+                                        <button
+                                            onClick={() => setEditingId(null)}
+                                            className="btn-secondary text-sm px-3 py-1"
+                                        >
+                                            Cancel
+                                        </button>
+                                    </div>
                                 </div>
                             ) : (
                                 <>
@@ -137,7 +139,7 @@ export default function NotesEditor({ slug, notes, onNotesChange }: NotesEditorP
                     ))}
 
                     {isAddingRecall && (
-                        <div className="flex gap-2">
+                        <div className="flex flex-col sm:flex-row gap-2">
                             <input
                                 type="text"
                                 value={newContent}
@@ -146,21 +148,23 @@ export default function NotesEditor({ slug, notes, onNotesChange }: NotesEditorP
                                 className="input-glass flex-1"
                                 autoFocus
                             />
-                            <button
-                                onClick={() => handleAddNote('RECALL')}
-                                className="btn-primary text-sm px-4 py-2"
-                            >
-                                Save
-                            </button>
-                            <button
-                                onClick={() => {
-                                    setIsAddingRecall(false);
-                                    setNewContent('');
-                                }}
-                                className="btn-secondary text-sm px-4 py-2"
-                            >
-                                Cancel
-                            </button>
+                            <div className="flex gap-2 self-end sm:self-auto">
+                                <button
+                                    onClick={() => handleAddNote('RECALL')}
+                                    className="btn-primary text-sm px-4 py-2"
+                                >
+                                    Save
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        setIsAddingRecall(false);
+                                        setNewContent('');
+                                    }}
+                                    className="btn-secondary text-sm px-4 py-2"
+                                >
+                                    Cancel
+                                </button>
+                            </div>
                         </div>
                     )}
                 </div>
