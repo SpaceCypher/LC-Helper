@@ -90,18 +90,33 @@ function getProblemDescription() {
     // Look for the problem description container
     const descriptionContainer = document.querySelector('[data-track-load="description_content"]');
     if (descriptionContainer) {
-        // Get only the first paragraph(s) before examples/constraints
-        const paragraphs = descriptionContainer.querySelectorAll('p');
+        // Get all child elements to preserve structure
+        const children = Array.from(descriptionContainer.children);
         const description = [];
 
-        for (const p of paragraphs) {
-            const text = p.textContent.trim();
-            // Stop if we hit Example or Constraints sections
-            if (text.toLowerCase().includes('example') || text.toLowerCase().includes('constraint')) {
+        for (const child of children) {
+            const text = child.textContent.trim();
+
+            // stop if we hit the "Example 1:" or "Constraints:" headers
+            // These are usually strong tags or p tags with specific text
+            // Check for "Example 1:" specifically to allow "For example" in text
+            if (
+                /^Example \d+:/.test(text) ||
+                text.toLowerCase() === 'examples' ||
+                text.toLowerCase() === 'constraints'
+            ) {
                 break;
             }
+
+            // Capture paragraphs, lists, pre blocks
             if (text) {
-                description.push(text);
+                if (child.tagName === 'UL' || child.tagName === 'OL') {
+                    // Handle lists
+                    const items = Array.from(child.querySelectorAll('li')).map(li => '• ' + li.textContent.trim());
+                    description.push(items.join('\n'));
+                } else {
+                    description.push(text);
+                }
             }
         }
 

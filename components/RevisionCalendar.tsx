@@ -24,7 +24,15 @@ export default function RevisionCalendar({ revisions }: RevisionCalendarProps) {
     const [currentMonth, setCurrentMonth] = useState(new Date());
     const [selectedDate, setSelectedDate] = useState<Date | null>(null);
 
-    // Get revisions grouped by date (UTC YYYY-MM-DD)
+    // Helper to get YYYY-MM-DD key from local date object
+    const getDateKey = (date: Date): string => {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    };
+
+    // 1. Get revisions grouped by NEXT REVIEW date (Future Work)
     const revisionsByDate = revisions.reduce((acc, revision) => {
         const dateKey = new Date(revision.nextReview).toISOString().split('T')[0];
         if (!acc[dateKey]) {
@@ -33,6 +41,43 @@ export default function RevisionCalendar({ revisions }: RevisionCalendarProps) {
         acc[dateKey].push(revision);
         return acc;
     }, {} as Record<string, Revision[]>);
+
+    // 2. Get activity grouped by LAST REVIEWED date (Past Achievement)
+    const activityByDate = revisions.reduce((acc, revision) => {
+        if (revision.lastReviewed) {
+            const dateKey = getDateKey(new Date(revision.lastReviewed));
+            if (!acc[dateKey]) {
+                acc[dateKey] = 0;
+            }
+            acc[dateKey]++;
+        }
+        return acc;
+    }, {} as Record<string, number>);
+
+    // 3. Calculate Streak
+    const calculateStreak = () => {
+        const today = new Date();
+        let streak = 0;
+        let currentCheck = new Date(today);
+
+        // Check today first
+        if (activityByDate[getDateKey(currentCheck)] > 0) {
+            streak++;
+        }
+
+        // Check backwards
+        while (true) {
+            currentCheck.setDate(currentCheck.getDate() - 1);
+            if (activityByDate[getDateKey(currentCheck)] > 0) {
+                streak++;
+            } else {
+                break;
+            }
+        }
+        return streak;
+    };
+
+    const currentStreak = calculateStreak();
 
     // Generate calendar grid for a month
     const generateCalendarDays = (month: Date) => {
@@ -60,33 +105,27 @@ export default function RevisionCalendar({ revisions }: RevisionCalendarProps) {
         return days;
     };
 
-    // Helper to get YYYY-MM-DD key from local date object
-    const getDateKey = (date: Date): string => {
-        const year = date.getFullYear();
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        const day = String(date.getDate()).padStart(2, '0');
-        return `${year}-${month}-${day}`;
-    };
-
     // Determine date status
     const getDateStatus = (date: Date): 'empty' | 'scheduled' | 'due' | 'completed' | 'overdue' => {
         const dateKey = getDateKey(date);
         const dateRevisions = revisionsByDate[dateKey];
+        const completedCount = activityByDate[dateKey] || 0;
+        const todayKey = getDateKey(new Date());
 
-        if (!dateRevisions || dateRevisions.length === 0) {
-            return 'empty';
+        // PRIORITY 1: If we did work today (or any past day), mark it green
+        // We use a threshold of 3 for a "Perfect Day", but even 1 is good
+        // Let's say: If completed >= 3 -> Completed (Green)
+        if (completedCount >= 3) {
+            return 'completed';
         }
 
-        // Use UTC comparison for status
-        const todayKey = new Date().toISOString().split('T')[0];
-
-        // Check if all problems for this date have been reviewed
-        const allCompleted = dateRevisions.every(rev =>
-            rev.lastReviewed && new Date(rev.lastReviewed) >= new Date(rev.nextReview)
-        );
-
-        if (allCompleted) {
-            return 'completed';
+        // PRIORITY 2: Future/Pending Work
+        if (!dateRevisions || dateRevisions.length === 0) {
+            // If we did SOME work but less than 3, maybe show a lighter green? 
+            // For now, let's stick to simple logic: 
+            // If 0 revisions due AND we did at least 1, it's completed for us (Green)
+            if (completedCount > 0) return 'completed';
+            return 'empty';
         }
 
         if (dateKey < todayKey) {
@@ -135,11 +174,19 @@ export default function RevisionCalendar({ revisions }: RevisionCalendarProps) {
     const calendarDays = generateCalendarDays(currentMonth);
 
     return (
-        <div className="glass-card p-6 animate-fade-in">
+        <div className="glass-card p-6 animate-fade-in relative overflow-hidden">
+            {/* Streak Badge */}
+            <div className="absolute top-0 right-0 p-6 pointer-events-none">
+                <div className="flex items-center gap-2 bg-glass-light px-3 py-1.5 rounded-full border border-glass-border">
+                    <span className="text-lg">🔥</span>
+                    <span className="font-medium text-orange-400">{currentStreak} Day Streak</span>
+                </div>
+            </div>
+
             {/* Month Navigation */}
             <div className="flex items-center justify-between mb-6">
                 <h2 className="text-2xl font-light">📅 {monthName}</h2>
-                <div className="flex gap-2">
+                <div className="flex gap-2 mr-32"> {/* Added margin to avoid overlap with streak */}
                     <button
                         onClick={() => handleMonthChange(-1)}
                         className="px-3 py-1 rounded-glass hover:bg-glass-light transition-colors"
@@ -178,9 +225,11 @@ export default function RevisionCalendar({ revisions }: RevisionCalendarProps) {
                     }
 
                     const dateKey = getDateKey(date);
-                    const dateRevisions = revisionsByDate[dateKey];
+                    // Use revisionsByDate for problem count, but status uses activity too
+                    const pendingCount = revisionsByDate[dateKey]?.length || 0;
+                    const completedCount = activityByDate[dateKey] || 0;
                     const status = getDateStatus(date);
-                    const problemCount = dateRevisions?.length || 0;
+
                     const isSelected = selectedDate ? getDateKey(selectedDate) === dateKey : false;
 
                     return (
@@ -198,18 +247,21 @@ export default function RevisionCalendar({ revisions }: RevisionCalendarProps) {
                             <span className={`text-sm font-medium ${getDateColor(status)}`}>
                                 {date.getDate()}
                             </span>
-                            {problemCount > 0 && (
+                            {/* Show pending count if > 0, else show checkmark if completed */}
+                            {pendingCount > 0 ? (
                                 <span className={`text-xs mt-1 ${getDateColor(status)}`}>
-                                    {problemCount}
+                                    {pendingCount}
                                 </span>
-                            )}
+                            ) : completedCount > 0 ? (
+                                <span className="text-xs mt-1 text-green-400">✓</span>
+                            ) : null}
                         </button>
                     );
                 })}
             </div>
 
             {/* Selected Date Details */}
-            {selectedDate && revisionsByDate[getDateKey(selectedDate)] && (
+            {selectedDate && (revisionsByDate[getDateKey(selectedDate)] || activityByDate[getDateKey(selectedDate)]) && (
                 <div className="mt-6 pt-6 border-t border-glass-border">
                     <h3 className="text-lg font-medium mb-4">
                         {selectedDate.toLocaleDateString('en-US', {
@@ -218,25 +270,34 @@ export default function RevisionCalendar({ revisions }: RevisionCalendarProps) {
                             day: 'numeric'
                         })}
                     </h3>
-                    <div className="space-y-2">
-                        {revisionsByDate[getDateKey(selectedDate)].map(revision => (
-                            <button
-                                key={revision.problem.slug}
-                                onClick={() => router.push(`/problems/${revision.problem.slug}`)}
-                                className="w-full p-3 rounded-glass border border-glass-border hover:border-accent/50 transition-colors text-left"
-                            >
-                                <div className="flex items-center justify-between">
-                                    <span className="font-medium">{revision.problem.title}</span>
-                                    <span className={`text-sm ${revision.problem.difficulty === 'Easy' ? 'text-green-400' :
-                                        revision.problem.difficulty === 'Medium' ? 'text-yellow-400' :
-                                            'text-red-400'
-                                        }`}>
-                                        {revision.problem.difficulty}
-                                    </span>
-                                </div>
-                            </button>
-                        ))}
-                    </div>
+
+                    {/* Show Completed Items for details? Currently we only have Pending items in `revisions` passed as props
+                        We can't show 'Completed' items details because `allRevisions` only has ONE entry per problem (the future one).
+                        So we can only show PENDING items here. 
+                    */}
+                    {revisionsByDate[getDateKey(selectedDate)] ? (
+                        <div className="space-y-2">
+                            {revisionsByDate[getDateKey(selectedDate)].map(revision => (
+                                <button
+                                    key={revision.problem.slug}
+                                    onClick={() => router.push(`/problems/${revision.problem.slug}`)}
+                                    className="w-full p-3 rounded-glass border border-glass-border hover:border-accent/50 transition-colors text-left"
+                                >
+                                    <div className="flex items-center justify-between">
+                                        <span className="font-medium">{revision.problem.title}</span>
+                                        <span className={`text-sm ${revision.problem.difficulty === 'Easy' ? 'text-green-400' :
+                                            revision.problem.difficulty === 'Medium' ? 'text-yellow-400' :
+                                                'text-red-400'
+                                            }`}>
+                                            {revision.problem.difficulty}
+                                        </span>
+                                    </div>
+                                </button>
+                            ))}
+                        </div>
+                    ) : (
+                        <p className="text-text-muted italic">No pending tasks. {activityByDate[getDateKey(selectedDate)] > 0 ? "You completed " + activityByDate[getDateKey(selectedDate)] + " tasks this day!" : ""}</p>
+                    )}
                 </div>
             )}
 
